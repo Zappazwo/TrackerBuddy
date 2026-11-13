@@ -95,6 +95,7 @@ local function CreateEntry(i)
   entry.highlight:SetAllPoints()
   entry.highlight:SetTexture("Interface\\Buttons\\CheckButtonHilight")
   entry.highlight:SetBlendMode("ADD")
+  entry.highlight:SetVertexColor(1, 0.82, 0)
   entry.highlight:Hide()
   entry:SetScript("OnEnter", EntryOnEnter)
   entry:SetScript("OnLeave", function() GameTooltip:Hide() end)
@@ -150,6 +151,16 @@ function UI.Rebuild()
   UI.Refresh()
 end
 
+-- Attributes freeze in combat, so arm every entry for casting beforehand;
+-- otherwise the entry active at combat start could not be re-selected.
+-- InCombatLockdown() is still false while PLAYER_REGEN_DISABLED runs.
+local function ArmAllEntries()
+  if InCombatLockdown() then return end
+  for _, entry in ipairs(UI.entries) do
+    if entry.spellID then entry:SetAttribute("type", "spell") end
+  end
+end
+
 function UI.Restore()
   if UnitIsDeadOrGhost("player") then return end
   if InCombatLockdown() then
@@ -173,6 +184,8 @@ function UI.OnEvent(event, ...)
   elseif event == "MINIMAP_UPDATE_TRACKING" then
     local active = UI.Refresh()
     if active then GetDB().lastSpellID = active.spellID end
+  elseif event == "PLAYER_REGEN_DISABLED" then
+    ArmAllEntries()
   elseif event == "PLAYER_REGEN_ENABLED" then
     if UI.pendingPosition then ApplyPosition() end
     if UI.pendingRebuild then UI.Rebuild() else UI.Refresh() end
@@ -184,7 +197,7 @@ end
 
 local events = CreateFrame("Frame")
 for _, e in ipairs({ "PLAYER_LOGIN", "SPELLS_CHANGED", "LEARNED_SPELL_IN_SKILL_LINE",
-                     "MINIMAP_UPDATE_TRACKING", "PLAYER_REGEN_ENABLED",
+                     "MINIMAP_UPDATE_TRACKING", "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED",
                      "PLAYER_ALIVE", "PLAYER_UNGHOST" }) do
   events:RegisterEvent(e)
 end

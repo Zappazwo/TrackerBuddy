@@ -142,6 +142,23 @@ test("smoke_login_in_combat_deferred", function()
   assert(#visible(ns) == 3)
 end)
 
+test("smoke_regen_disabled_arms_all_entries", function()
+  local ns = setup(hunter())
+  STUB.fire("PLAYER_LOGIN")
+  assert(entryFor(ns, 19883).attrs.type == nil)
+  STUB.fire("PLAYER_REGEN_DISABLED")
+  for _, e in ipairs(visible(ns)) do
+    assert(e.attrs.type == "spell", "entry " .. e.spellID)
+  end
+  STUB.combat = true
+  STUB.fire("MINIMAP_UPDATE_TRACKING")
+  assert(entryFor(ns, 19883).attrs.type == "spell")
+  STUB.combat = false
+  STUB.fire("PLAYER_REGEN_ENABLED")
+  assert(entryFor(ns, 19883).attrs.type == nil)
+  assert(entryFor(ns, 1494).attrs.type == "spell")
+end)
+
 local failed = 0
 for _, name in ipairs(order) do
   local ok, err = pcall(tests[name])

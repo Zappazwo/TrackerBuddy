@@ -6,7 +6,7 @@ local NOOPS = {
   "SetSize", "SetWidth", "SetHeight", "SetAllPoints", "ClearAllPoints",
   "RegisterForClicks", "RegisterForDrag", "SetMovable", "SetClampedToScreen",
   "StartMoving", "StopMovingOrSizing", "SetFrameRef", "WrapScript",
-  "SetBlendMode", "SetDrawLayer", "SetTexCoord",
+  "SetBlendMode", "SetDrawLayer", "SetTexCoord", "SetVertexColor",
 }
 
 local function makeObject(kind, name, parent)
