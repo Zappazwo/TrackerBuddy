@@ -114,6 +114,7 @@ function UI.Refresh()
   local spells = ReadList()
   local active = Core.GetActive(spells)
   UI.activeName = active and active.name or nil
+  if active then GetDB().lastSpellID = active.spellID end
   button.icon:SetTexture(active and C_Spell.GetSpellTexture(active.spellID) or FALLBACK_ICON)
 
   local bySpell = {}
@@ -187,8 +188,7 @@ function UI.OnEvent(event, ...)
   elseif event == "SPELLS_CHANGED" or event == "LEARNED_SPELL_IN_SKILL_LINE" then
     UI.Rebuild()
   elseif event == "MINIMAP_UPDATE_TRACKING" then
-    local active = UI.Refresh()
-    if active then GetDB().lastSpellID = active.spellID end
+    UI.Refresh()
   elseif event == "PLAYER_REGEN_DISABLED" then
     FinishDrag()
     ArmAllEntries()

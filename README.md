@@ -1,6 +1,6 @@
 # TrackerBuddy
 
-Ein Addon für WoW: Forever (Client 1.60.1). Es zeigt dem Jäger genau einen Button mit dem aktuell aktiven Tracking-Symbol. Ein Klick öffnet eine Liste aller bekannten Tracking-Fähigkeiten (Jäger-Tracks plus Minerale/Kräuter finden usw.). Ein Klick auf einen Eintrag wirkt den Zauber und schließt die Liste, auch im Kampf.
+Ein Addon für WoW: Forever (Client 1.60.1). Es zeigt dir genau einen Button mit dem aktuell aktiven Tracking-Symbol. Ein Klick öffnet eine Liste aller bekannten Tracking-Fähigkeiten (Jäger-Tracks plus Minerale/Kräuter finden usw.). Ein Klick auf einen Eintrag wirkt den Zauber und schließt die Liste, auch im Kampf.
 
 ## Installation
 
@@ -11,7 +11,7 @@ Ein Addon für WoW: Forever (Client 1.60.1). Es zeigt dem Jäger genau einen But
 
 ## Benutzung
 
-- Linksklick auf den Button: Liste öffnen/schließen (auch im Kampf).
+- Klick auf den Button: Liste öffnen/schließen (auch im Kampf).
 - Klick auf einen Eintrag: Tracking wird gewirkt, die Liste schließt sich.
 - Der aktive Eintrag ist golden hervorgehoben. Tooltips zeigen den Namen.
 - Shift + Ziehen: Button verschieben (nicht im Kampf). Die Position wird pro Charakter gespeichert.
@@ -30,6 +30,7 @@ Vorher `/console scriptErrors 1` eingeben, damit Lua-Fehler sichtbar werden.
 - [ ] Liste öffnet und schließt sich im Kampf
 - [ ] Tracking wechseln außerhalb des Kampfs
 - [ ] Tracking wechseln im Kampf
+- [ ] Tracking einmal mit `/console ActionButtonUseKeyDown 1` und einmal mit `/console ActionButtonUseKeyDown 0` wechseln (Klicks müssen in beiden Fällen funktionieren)
 - [ ] Klick auf einen Eintrag schließt die Liste (außerhalb und im Kampf)
 - [ ] Icon aktualisiert sich nach dem Wechsel
 - [ ] Minerale finden / Kräuter finden erscheinen, wenn gelernt
@@ -40,7 +41,7 @@ Vorher `/console scriptErrors 1` eingeben, damit Lua-Fehler sichtbar werden.
 
 ## Entwicklung
 
-Tests der Kernlogik laufen ohne Spiel, nötig ist `lua5.1`:
+Die Tests laufen ohne Spiel und decken die Kernlogik sowie UI-Smoke-Tests mit WoW-Stubs ab. Nötig sind `lua5.1` und `luac5.1`:
 
 ```bash
 bash tests/run.sh
