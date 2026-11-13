@@ -1,0 +1,9 @@
+## Interface: 16001
+## Title: TrackerBuddy
+## Notes: One button for all tracking abilities
+## Author: Patrick
+## Version: 0.1.0
+## SavedVariablesPerCharacter: TrackerBuddyDB
+
+Core.lua
+UI.lua
