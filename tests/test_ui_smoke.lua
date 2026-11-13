@@ -9,8 +9,9 @@ local function hunter()
 end
 
 -- Fresh stubs + fresh addon load for every test.
-local function setup(infos, db)
+local function setup(infos, db, beforeLoad)
   dofile("tests/wow_stubs.lua")
+  if beforeLoad then beforeLoad() end
   C_Minimap.infos = infos
   TrackerBuddyDB = db
   local ns = {}
@@ -157,6 +158,74 @@ test("smoke_regen_disabled_arms_all_entries", function()
   STUB.fire("PLAYER_REGEN_ENABLED")
   assert(entryFor(ns, 19883).attrs.type == nil)
   assert(entryFor(ns, 1494).attrs.type == "spell")
+end)
+
+test("smoke_entries_wrapped_to_close_list", function()
+  local ns = setup(hunter())
+  STUB.fire("PLAYER_LOGIN")
+  assert(#STUB.wraps == 3, "wraps " .. #STUB.wraps)
+  for i, w in ipairs(STUB.wraps) do
+    assert(w.handler == TrackerBuddyList)
+    assert(w.frame == ns.UI.entries[i])
+    assert(w.script == "OnClick")
+    assert(w.pre == "return nil, true", "pre-body must return a message")
+    assert(w.post == "owner:Hide()")
+  end
+  STUB.fire("SPELLS_CHANGED")
+  assert(#STUB.wraps == 3, "entries reused, not re-wrapped")
+end)
+
+test("smoke_drag_stopped_on_combat_start", function()
+  setup(hunter())
+  STUB.fire("PLAYER_LOGIN")
+  local b = TrackerBuddyButton
+  STUB.shift = true
+  b.scripts.OnDragStart(b)
+  assert(b.moving == true)
+  b:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 10, -20)
+  STUB.fire("PLAYER_REGEN_DISABLED")
+  assert(b.moving == false and b.stopCount == 1)
+  local p = TrackerBuddyDB.point
+  assert(p[1] == "TOPLEFT" and p[2] == "TOPLEFT" and p[3] == 10 and p[4] == -20)
+  STUB.combat = true
+  b.scripts.OnDragStop(b)
+  assert(b.stopCount == 1, "no StopMovingOrSizing in combat")
+end)
+
+test("smoke_drag_stop_in_combat_ignored", function()
+  setup(hunter())
+  STUB.fire("PLAYER_LOGIN")
+  local b = TrackerBuddyButton
+  STUB.shift = true
+  b.scripts.OnDragStart(b)
+  STUB.combat = true
+  local points = #b.points
+  b.scripts.OnDragStop(b)
+  assert(not b.stopCount, "no StopMovingOrSizing in combat")
+  assert(#b.points == points and TrackerBuddyDB.point == nil)
+end)
+
+test("smoke_drag_saves_position", function()
+  setup(hunter())
+  STUB.fire("PLAYER_LOGIN")
+  local b = TrackerBuddyButton
+  b.scripts.OnDragStart(b)
+  assert(not b.moving, "no move without Shift")
+  STUB.shift = true
+  b.scripts.OnDragStart(b)
+  b:SetPoint("LEFT", UIParent, "LEFT", 5, 6)
+  b.scripts.OnDragStop(b)
+  assert(b.stopCount == 1)
+  local p = TrackerBuddyDB.point
+  assert(p[1] == "LEFT" and p[3] == 5 and p[4] == 6)
+end)
+
+test("smoke_unknown_learned_event_tolerated", function()
+  local ns = setup(hunter(), nil, function()
+    STUB.unknownEvents.LEARNED_SPELL_IN_SKILL_LINE = true
+  end)
+  STUB.fire("PLAYER_LOGIN")
+  assert(#visible(ns) == 3)
 end)
 
 local failed = 0

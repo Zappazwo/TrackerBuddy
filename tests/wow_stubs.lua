@@ -1,11 +1,12 @@
 -- Minimal WoW API fakes for the UI smoke tests (plain Lua 5.1).
 -- Loading this file resets all fake state.
-STUB = { combat = false, dead = false, shift = false, frames = {}, attrCalls = {} }
+STUB = { combat = false, dead = false, shift = false, frames = {}, attrCalls = {},
+         wraps = {}, unknownEvents = {} }
 
 local NOOPS = {
   "SetSize", "SetWidth", "SetHeight", "SetAllPoints", "ClearAllPoints",
   "RegisterForClicks", "RegisterForDrag", "SetMovable", "SetClampedToScreen",
-  "StartMoving", "StopMovingOrSizing", "SetFrameRef", "WrapScript",
+  "SetFrameRef", "SetDontSavePosition",
   "SetBlendMode", "SetDrawLayer", "SetTexCoord", "SetVertexColor",
 }
 
@@ -24,7 +25,15 @@ local function makeObject(kind, name, parent)
   function obj:GetAttribute(k) return self.attrs[k] end
   function obj:SetScript(n, fn) self.scripts[n] = fn end
   function obj:GetScript(n) return self.scripts[n] end
-  function obj:RegisterEvent(e) self.events[e] = true end
+  function obj:RegisterEvent(e)
+    if STUB.unknownEvents[e] then error("unknown event " .. e) end
+    self.events[e] = true
+  end
+  function obj:WrapScript(frame, script, pre, post)
+    STUB.wraps[#STUB.wraps + 1] = { handler = self, frame = frame, script = script, pre = pre, post = post }
+  end
+  function obj:StartMoving() self.moving = true end
+  function obj:StopMovingOrSizing() self.moving = false; self.stopCount = (self.stopCount or 0) + 1 end
   function obj:SetPoint(...) self.points[#self.points + 1] = { ... } end
   function obj:GetPoint()
     local p = self.points[#self.points]

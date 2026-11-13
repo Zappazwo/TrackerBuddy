@@ -47,6 +47,7 @@ end)
 button:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
 button:SetMovable(true)
+button:SetDontSavePosition(true)
 button:SetClampedToScreen(true)
 button:RegisterForDrag("LeftButton")
 button:SetScript("OnDragStart", function(self)
@@ -55,13 +56,16 @@ button:SetScript("OnDragStart", function(self)
     self:StartMoving()
   end
 end)
-button:SetScript("OnDragStop", function(self)
-  if not self.isMoving then return end
-  self.isMoving = nil
-  self:StopMovingOrSizing()
-  local point, _, relPoint, x, y = self:GetPoint()
+-- Stopping a protected frame is blocked in combat; PLAYER_REGEN_DISABLED
+-- ends a running drag while that is still allowed.
+local function FinishDrag()
+  if not button.isMoving or InCombatLockdown() then return end
+  button.isMoving = nil
+  button:StopMovingOrSizing()
+  local point, _, relPoint, x, y = button:GetPoint()
   GetDB().point = { point, relPoint, x, y }
-end)
+end
+button:SetScript("OnDragStop", FinishDrag)
 
 local function ApplyPosition()
   if InCombatLockdown() then
@@ -100,7 +104,8 @@ local function CreateEntry(i)
   entry:SetScript("OnEnter", EntryOnEnter)
   entry:SetScript("OnLeave", function() GameTooltip:Hide() end)
   -- Post-body runs in the list's restricted environment: close after the cast.
-  list:WrapScript(entry, "OnClick", "", "owner:Hide()")
+  -- The pre-body must return a message, or the post-body is skipped.
+  list:WrapScript(entry, "OnClick", "return nil, true", "owner:Hide()")
   return entry
 end
 
@@ -185,6 +190,7 @@ function UI.OnEvent(event, ...)
     local active = UI.Refresh()
     if active then GetDB().lastSpellID = active.spellID end
   elseif event == "PLAYER_REGEN_DISABLED" then
+    FinishDrag()
     ArmAllEntries()
   elseif event == "PLAYER_REGEN_ENABLED" then
     if UI.pendingPosition then ApplyPosition() end
@@ -196,11 +202,13 @@ function UI.OnEvent(event, ...)
 end
 
 local events = CreateFrame("Frame")
-for _, e in ipairs({ "PLAYER_LOGIN", "SPELLS_CHANGED", "LEARNED_SPELL_IN_SKILL_LINE",
+for _, e in ipairs({ "PLAYER_LOGIN", "SPELLS_CHANGED",
                      "MINIMAP_UPDATE_TRACKING", "PLAYER_REGEN_DISABLED", "PLAYER_REGEN_ENABLED",
                      "PLAYER_ALIVE", "PLAYER_UNGHOST" }) do
   events:RegisterEvent(e)
 end
+-- May not exist on this client; registering an unknown event raises an error.
+pcall(events.RegisterEvent, events, "LEARNED_SPELL_IN_SKILL_LINE")
 events:SetScript("OnEvent", function(_, event, ...) UI.OnEvent(event, ...) end)
 
 return ns
